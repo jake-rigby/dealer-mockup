@@ -22,7 +22,7 @@ navigator.geolocation.getCurrentPosition(
         // Display it
         const currentLocationElem = document.getElementById('current-location');
         currentLocationElem.innerHTML = `
-            Your location is ${pos.coords.latitude.toFixed(3)}, ${pos.coords.longitude.toFixed(3)}
+            Your location is ${position.lat.toFixed(3)}, ${position.lng.toFixed(3)}
         `;
 
         // Get proximal locations at radius 2km to get all locations in this range
