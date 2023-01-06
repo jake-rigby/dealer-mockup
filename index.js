@@ -1,33 +1,63 @@
+// Index.js
 
 // Get the device coordinates and do further actions in the callback
+// nb - best practice is to only initiate this check on a user intention, like a click
 navigator.geolocation.getCurrentPosition(
     
     // the success callback
     function (pos) {
 
-        // display it
-        let currentLocationElem = document.getElementById('current-location');
-        currentLocationElem.innerHTML = `Your location is ${pos.coords.latitude.toFixed(3)}, ${pos.coords.longitude.toFixed(3)}`;
-
-        // translate the format for the proximity check function and call it at radius 2km to get all locations in this range
-        const proximalLocations = checkProximities({
+        // format the current position for our code
+        let position = {
             lat: pos.coords.latitude,
             lng: pos.coords.longitude,
-        }, 2);
+        }
 
-        // Show a list of proximal locations
-        let proximalLocationsElem = document.getElementById('proximal-locations');
-        proximalLocationsElem.innerHTML = `You are within range of ${Object.keys(proximalLocations).map(key => proximalLocations[key].name).toString()}`;
+        // Harcode location for testing or comment out
+        // position = {
+        //     lat: 53.42485,
+        //     lng: -2.2376907,
+        // }
 
-        // Display a price list for each in-range location
-        let prices = "";
-        Object.keys(proximalLocations).forEach(key => {
-            let loc = proximalLocations[key];
-            prices += `${loc.name}: \n ${jsonToList(loc.prices)}\n`
-        })
-        
-        let availablePricesElem = document.getElementById('available-prices');
-        availablePricesElem.innerHTML = prices;
+        // Display it
+        const currentLocationElem = document.getElementById('current-location');
+        currentLocationElem.innerHTML = `
+            Your location is ${pos.coords.latitude.toFixed(3)}, ${pos.coords.longitude.toFixed(3)}
+        `;
+
+        // Get proximal locations at radius 2km to get all locations in this range
+        // Might be better to include a range in each locaiton data so they can vary
+        const proximalLocations = checkProximities(position, 2);
+
+        // Early exit for no proximal locaions
+        if (proximalLocations.length == 0) {
+            const nothingMsgElem = document.getElementById('nothing-msg');
+            nothingMsgElem.innerHTML = 'You aren\'t near anywhere with prices';
+
+            // stop
+            return;
+        }
+
+        // Display them
+        const proximalLocationsElem = document.getElementById('proximal-locations');
+        proximalLocationsElem.innerHTML = `
+            You are within range of ${Object.keys(proximalLocations).map(key => proximalLocations[key].name).toString()}
+        `;
+
+        // Compile the prices into some html
+        const prices = proximalLocations.map(location => `
+            ${location.name}:
+            <br>
+            ${jsonToList(location.prices)}
+            <hr>
+        `);        
+
+        // Display them
+        const availablePricesElem = document.getElementById('available-prices');
+        availablePricesElem.innerHTML = `
+            <h2>Local Prices</h2>
+            ${prices.join('<br>')}
+        `;
 
     },
 
@@ -38,20 +68,12 @@ navigator.geolocation.getCurrentPosition(
 )
 
 // checks the provided current location against the locations in `data`
-function checkProximities(currentLocation, radius) {
-
-    const result = [];
-
-    // You can get a list of locations to loop over like this
-    const locations = Object.keys(data);
+function checkProximities(position, radius) {
 
     // Loop through each one and see if you're proximate
-    locations.forEach(key => {
-        let distance = calculateDistance(data[key].location, currentLocation);
-        if (distance < radius) {
-            // add to the result (using a clone instead of the original object)
-            result[key] = Object.assign({}, data[key]);
-        }
+    const result = data.filter(location => {
+        let distance = calculateDistance(location.position, position);
+        return distance < radius;
     });
 
     return result;

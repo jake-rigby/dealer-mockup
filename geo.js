@@ -1,5 +1,4 @@
-
-
+// Geo.js
 
 // Calculate the distance between two geographic points in miles
 function calculateDistance(location1, location2) {
